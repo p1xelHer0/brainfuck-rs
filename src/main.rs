@@ -49,7 +49,10 @@ fn brainfuck(data: &str) -> Vec<u8> {
                 b']' => match cells.get(data_pointer) {
                     Some(0) => _ = stack.pop(),
                     None => panic!("Data pointer [{}] outside of cells", data_pointer),
-                    _ => instruction_pointer = *stack.last().unwrap(),
+                    _ => match stack.last() {
+                        Some(next_pointer) => instruction_pointer = *next_pointer,
+                        None => panic!("No matching `[` found to jump to"),
+                    },
                 },
                 // user input doesn't work right now?
                 b',' => match io::stdin().read_exact(&mut input) {
