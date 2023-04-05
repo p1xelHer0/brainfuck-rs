@@ -15,11 +15,11 @@ fn brainfuck(data: &str) -> Vec<u8> {
     let commands: Vec<u8> = data.as_bytes().to_vec();
     let mut instruction_pointer = 0;
 
-    let mut cells = [0; CELL_SIZE];
+    let mut cells = [0u8; CELL_SIZE]; // `wrapping_add/sub breaks if I change this to `0`?
     let mut data_pointer = 0;
     let mut stack: Vec<usize> = Vec::new();
 
-    let mut input = [0; 1];
+    let mut input = [0u8; 1];
     let mut output: Vec<u8> = Vec::new();
 
     while instruction_pointer < commands.len() {
@@ -27,8 +27,16 @@ fn brainfuck(data: &str) -> Vec<u8> {
             Some(instruction) => match instruction {
                 b'>' => data_pointer += 1,
                 b'<' => data_pointer -= 1,
-                b'+' => cells[data_pointer] += 1,
-                b'-' => cells[data_pointer] -= 1,
+                b'+' => {
+                    if let Some(cell) = cells.get_mut(data_pointer) {
+                        *cell = cell.wrapping_add(1);
+                    }
+                }
+                b'-' => {
+                    if let Some(cell) = cells.get_mut(data_pointer) {
+                        *cell = cell.wrapping_sub(1);
+                    }
+                }
                 b'[' => match cells.get(data_pointer) {
                     Some(0) => instruction_pointer = bracket_match(instruction_pointer, &commands),
                     None => panic!("Data pointer [{data_pointer}] outside of cells"),
