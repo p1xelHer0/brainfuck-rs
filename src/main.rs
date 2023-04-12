@@ -30,75 +30,42 @@ fn brainfuck(data: &str) -> Result<Vec<u8>, BrainfuckError> {
     let mut output: Vec<u8> = Vec::new();
 
     while let Some(instruction) = commands.get(instruction_pointer) {
-        let iteration = match instruction {
-            b'>' => {
-                data_pointer += 1;
-                Ok(())
-            }
-            b'<' => {
-                data_pointer -= 1;
-                Ok(())
-            }
+        match instruction {
+            b'>' => data_pointer += 1,
+            b'<' => data_pointer -= 1,
             b'+' => match cells.get_mut(data_pointer) {
-                Some(cell) => {
-                    *cell = cell.wrapping_add(1);
-                    Ok(())
-                }
-                _ => Err(BrainfuckError::PointerOutsideOfCells),
+                Some(cell) => *cell = cell.wrapping_add(1),
+                None => return Err(BrainfuckError::PointerOutsideOfCells),
             },
             b'-' => match cells.get_mut(data_pointer) {
-                Some(cell) => {
-                    *cell = cell.wrapping_sub(1);
-                    Ok(())
-                }
-                _ => Err(BrainfuckError::PointerOutsideOfCells),
+                Some(cell) => *cell = cell.wrapping_sub(1),
+                None => return Err(BrainfuckError::PointerOutsideOfCells),
             },
             b'[' => match cells.get(data_pointer) {
-                Some(0) => {
-                    instruction_pointer = bracket_match(instruction_pointer, &commands)?;
-                    Ok(())
-                }
-                None => Err(BrainfuckError::PointerOutsideOfCells),
-                _ => {
-                    stack.push(instruction_pointer);
-                    Ok(())
-                }
+                Some(0) => instruction_pointer = bracket_match(instruction_pointer, &commands)?,
+                None => return Err(BrainfuckError::PointerOutsideOfCells),
+                _ => stack.push(instruction_pointer),
             },
             b']' => match cells.get(data_pointer) {
-                Some(0) => {
-                    _ = stack.pop();
-                    Ok(())
-                }
-                None => Err(BrainfuckError::PointerOutsideOfCells),
+                Some(0) => _ = stack.pop(),
+                None => return Err(BrainfuckError::PointerOutsideOfCells),
                 _ => match stack.last() {
-                    Some(next_pointer) => {
-                        instruction_pointer = *next_pointer;
-                        Ok(())
-                    }
-                    None => Err(BrainfuckError::NoMatchingLHSBracket),
+                    Some(next_pointer) => instruction_pointer = *next_pointer,
+                    None => return Err(BrainfuckError::NoMatchingLHSBracket),
                 },
             },
             b',' => match io::stdin().read_exact(&mut input) {
-                Ok(_) => {
-                    cells[data_pointer] = input[0];
-                    Ok(())
-                }
-                Err(_) => Err(BrainfuckError::FailedInput),
+                Ok(_) => cells[data_pointer] = input[0],
+                Err(_) => return Err(BrainfuckError::FailedInput),
             },
             b'.' => match cells.get(data_pointer) {
-                Some(cell_content) => {
-                    output.push(*cell_content);
-                    Ok(())
-                }
-                _ => Err(BrainfuckError::PointerOutsideOfCells),
+                Some(cell_content) => output.push(*cell_content),
+                _ => return Err(BrainfuckError::PointerOutsideOfCells),
             },
-            _ => Ok(()),
+            _ => (),
         };
 
-        match iteration {
-            Ok(_) => instruction_pointer += 1,
-            Err(error) => return Err(error),
-        }
+        instruction_pointer += 1;
     }
 
     Ok(output)
@@ -112,17 +79,11 @@ fn bracket_match(instruction_pointer: usize, commands: &[u8]) -> Result<usize, B
         instruction_pointer += 1;
         match commands.get(instruction_pointer) {
             Some(instruction) => match instruction {
-                b'[' => {
-                    depth += 1;
-                }
-                b']' => {
-                    depth -= 1;
-                }
+                b'[' => depth += 1,
+                b']' => depth -= 1,
                 _ => (),
             },
-            None => {
-                return Err(BrainfuckError::NoMatchingRHSBracket);
-            }
+            None => return Err(BrainfuckError::NoMatchingRHSBracket),
         };
     }
 
