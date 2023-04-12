@@ -12,3 +12,4 @@ I don't know a lot of Rust but I know more Rust than I did before writing this. 
   - `REPL` style input, show live `output`
   - `CLI` functionality
   - Read input from file
+  - Implement `Display` and `Error` trait
